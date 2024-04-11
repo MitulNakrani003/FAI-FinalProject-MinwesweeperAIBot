@@ -10,8 +10,8 @@ def main():
     # playMultipleGames_DQN(1000, True)
     # play5games_DQN(5,True)
     
-    # playMultipleGames_DDQN(1000, True)
-    play5games_DDQN(5,True)
+    playMultipleGames_DDQN(1000, True)
+    # play5games_DDQN(5,True)
 
 
 class AI_Player_DQN():
@@ -86,6 +86,7 @@ def play5games_DQN(games_no=5, display_games=True):
     step = 0
     first_loss = 0
     i=0
+
 
     while(i<games_no):
         count+=1
