@@ -73,6 +73,7 @@ plt.show()
 
 plt.figure()
 plt.ylabel("% Wins per batch")
+plt.xlabel("Number of Batches")
 plt.title("Win rate curve using DQN")
 Wins = plt.plot(x, smooth(wins,smooth_val)[:-smooth_val], antialiased=True,lw=1.75,label="Win Rate")
 
@@ -83,6 +84,7 @@ plt.show()
 
 plt.figure()
 plt.ylabel("Average Rewards")
+plt.xlabel("Number of Batches")
 plt.title("Average rewards curve using DQN")
 Rewards = plt.plot(x, smooth(rewards,smooth_val)[:-smooth_val], antialiased=True,lw=1.75,label="Rewards")
 
@@ -93,6 +95,7 @@ plt.show()
 
 plt.figure()
 plt.ylabel("Loss")
+plt.xlabel("Number of Batches")
 plt.title("Loss curve using DQN")
 Loss = plt.plot(x, smooth(losses,smooth_val)[:-smooth_val], antialiased=True,lw=1.75,label="Loss")
 
@@ -102,6 +105,7 @@ plt.show()
 ## Plot Epsilon vs batches 
 
 plt.figure()
+plt.xlabel("Number of Batches")
 plt.ylabel("Epsilon")
 plt.title("Epsilon Decay using DQN")
 Ep = plt.plot(x, smooth(epsilons,smooth_val)[:-smooth_val], antialiased=True,lw=1.75,label="Epsilon")
