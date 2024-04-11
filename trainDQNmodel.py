@@ -2,7 +2,7 @@ import time
 import torch
 import numpy as np
 import sys
-from model import DuelingDeepQNetwork, Buffer
+from DQNmodel import DQN, Buffer
 from env import MineSweeper
 from display import DisplayGame
 from numpy import float32
@@ -19,8 +19,8 @@ class ModelTrain():
         self.bomb_no = bomb_no
         self.box_count = width * height
         self.env = MineSweeper(self.width, self.height, self.bomb_no)
-        self.current_model = DuelingDeepQNetwork(self.box_count, self.box_count)
-        self.target_model = DuelingDeepQNetwork(self.box_count, self.box_count)
+        self.current_model = DQN(self.box_count, self.box_count)
+        self.target_model = DQN(self.box_count, self.box_count)
         self.target_model.eval()
         self.optimizer = torch.optim.Adam(self.current_model.parameters(), lr=0.003, weight_decay=1e-5)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=2000, gamma=0.95)
@@ -34,12 +34,12 @@ class ModelTrain():
         self.reward_step = 0.01
         self.batch_size = 4096
         self.tau = 5e-5
-        self.log = open("./training_log.txt", 'w')
+        self.log = open("./training_log_DQN.txt", 'w')
         if self.render_flag:
             self.DisplayGame = DisplayGame(self.env.state)
 
     def load_models(self, number):
-        path = "./trained_checkpoints/trained_for_" + str(number) + ".pth"
+        path = "./trained_checkpoints_DQN/trained_for_" + str(number) + ".pth"
         weights = torch.load(path)
         self.current_model.load_state_dict(weights['current_state_dict'])
         self.target_model.load_state_dict(weights['target_state_dict'])
@@ -77,8 +77,8 @@ class ModelTrain():
         next_mask = FloatTensor(float32(next_mask))
         reward = FloatTensor(reward)
         done = FloatTensor(terminal)
-        q_values = self.current_model(state, mask)
-        next_q_values = self.target_model(next_state, next_mask)
+        q_values = self.current_model(state)
+        next_q_values = self.target_model(next_state)
         q_value = q_values.gather(1, action.unsqueeze(1)).squeeze(1)
         next_q_value = next_q_values.max(1)[0]
         expected_q_value = reward + self.gamma * next_q_value * (1 - done)
@@ -94,7 +94,7 @@ class ModelTrain():
         return loss_print
 
     def save_checkpoints(self, batch_no):
-        path = "./trained_checkpoints/trained_for_" + str(batch_no) + ".pth"
+        path = "./trained_checkpoints_DQN/trained_for_" + str(batch_no) + ".pth"
         torch.save({
             'epoch': batch_no,
             'current_state_dict': self.current_model.state_dict(),
@@ -118,7 +118,7 @@ def main():
     driver = ModelTrain(mazeWidth, mazeHeight, mazeBomb, False)
     state = driver.env.state
     epochs = 20000
-    save_every = 2000
+    save_every = 1000
     count = 0
     running_reward = 0
     batch_no = 0

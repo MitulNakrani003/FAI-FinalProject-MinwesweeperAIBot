@@ -5,9 +5,9 @@ import numpy as np
 import random
 
 
-class DuelingDeepQNetwork(nn.Module):
+class DuelingDQN(nn.Module):
     def __init__(self, inp_dim, action_dim):
-        super(DuelingDeepQNetwork, self).__init__()
+        super(DuelingDQN, self).__init__()
         self.feature = nn.Sequential(
             nn.Linear(inp_dim, 128), nn.ReLU(),
             nn.Linear(128, 128), nn.ReLU(),

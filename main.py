@@ -1,23 +1,27 @@
 import torch
-from model import DuelingDeepQNetwork
+from DDQNmodel import DuelingDQN
+from DQNmodel import DQN
 from env import MineSweeper
 from display import DisplayGame
 import time
 
 
 def main():
-    PlayMultipleGames(20000, False)
-    PlayAGame(True)
+    # playMultipleGames_DQN(1000, True)
+    # play5games_DQN(5,True)
+    
+    # playMultipleGames_DDQN(1000, True)
+    play5games_DDQN(5,True)
 
 
-class AI_Player():
+class AI_Player_DQN():
     def __init__(self, render_flag):
-        self.model = DuelingDeepQNetwork(36, 36)  # To Change For Different Models
-        self.render_flag = render_flag
-        self.width = 6  # To Change For Maze Size
-        self.height = 6  # To Change For Maze Size
-        self.bombs = 6  # To Change For Bombs
-        self.env = MineSweeper(self.width, self.height, bomb_no=self.bombs)
+        self.model = DQN(36, 36)  
+        self.render_flag = render_flag  # For GUI visualization on/off
+        self.width = 6  # To Change For Maze width
+        self.height = 6  # To Change For Maze height
+        self.bombs = 6  # To Change For Number of mines 
+        self.env = MineSweeper(self.width, self.height, self.bombs)
         if self.render_flag:
             self.renderer = DisplayGame(self.env.state)
         model_number = 20000  # To Change For Different Models
@@ -30,7 +34,7 @@ class AI_Player():
         return action
 
     def load_models(self, number):
-        path = "trained_checkpoints/trained_for_" + str(number) + ".pth"
+        path = "trained_checkpoints_DQN/trained_for_" + str(number) + ".pth"
         dictTemp = torch.load(path)
         self.model.load_state_dict(dictTemp['current_state_dict'])
         self.model.epsilon = 0
@@ -46,8 +50,8 @@ class AI_Player():
         return next_state, terminal, reward
 
 
-def PlayMultipleGames(games_no, display_games=False):
-    tester = AI_Player(display_games)
+def playMultipleGames_DQN(games_no, display_games=True):
+    tester = AI_Player_DQN(display_games)
     state = tester.env.state
     mask = tester.env.fog
     wins = 0
@@ -69,34 +73,133 @@ def PlayMultipleGames(games_no, display_games=False):
                 wins += 1
             step = 0
 
-    print("Trained Win Rate For " + games_no + " Games: " + str(wins * 100 / (games_no)))
-    print("Win Rate Excluding First Loss: " + str(wins * 100 / (games_no - first_loss)))
+    # print("Trained using DQN : Win Rate For " + str(games_no) + " Games: " + str(wins * 100 / (games_no)))
+    print("Win Rate using DQN: " + str(wins * 100 / (games_no - first_loss)))
 
 
-def PlayAGame(display_games=True):
-    tester = AI_Player(display_games)
+def play5games_DQN(games_no=5, display_games=True):
+    
+    tester = AI_Player_DQN(True)
     state = tester.env.state
     count = 0
     start = time.perf_counter()
     step = 0
     first_loss = 0
-    while True:
-        count += 1
+    i=0
+
+    while(i<games_no):
+        count+=1
+        step+=1
+        action = tester.get_action(state)
+        next_state,terminal,reward = tester.do_step(action)
+        state = next_state
+        print(reward)
+        time.sleep(0.5)
+
+        if(terminal):
+            if(reward==1):
+                print("WIN")
+            else:
+                
+                print("LOSS")
+            i+=1
+            tester.env.reset()
+            step=0
+            state = tester.env.state
+            # break
+
+class AI_Player_DDQN():
+    def __init__(self, render_flag):
+        self.model = DuelingDQN(36, 36)
+        self.render_flag = render_flag  # For GUI visualization on/off
+        self.width = 6  # To Change For Maze width
+        self.height = 6  # To Change For Maze height
+        self.bombs = 6  # To Change For Number of mines 
+        self.env = MineSweeper(self.width, self.height, self.bombs)
+        if self.render_flag:
+            self.renderer = DisplayGame(self.env.state)
+        model_number = 19000  # To Change For Different Models
+        self.load_models(model_number)
+
+    def get_action(self, state):
+        state = state.flatten()
+        mask = (1 - self.env.fog).flatten()
+        action = self.model.act(state, mask)
+        return action
+
+    def load_models(self, number):
+        path = "trained_checkpoints_DDQN/trained_for_" + str(number) + ".pth"
+        dictTemp = torch.load(path)
+        self.model.load_state_dict(dictTemp['current_state_dict'])
+        self.model.epsilon = 0
+
+    def do_step(self, action):
+        i = int(action / self.width)
+        j = action % self.width
+        if self.render_flag:
+            self.renderer.state = self.env.state
+            self.renderer.draw()
+            self.renderer.bugfix()
+        next_state, terminal, reward = self.env.choose(i, j)
+        return next_state, terminal, reward
+
+
+def playMultipleGames_DDQN(games_no, display_games=True):
+    tester = AI_Player_DDQN(display_games)
+    state = tester.env.state
+    mask = tester.env.fog
+    wins = 0
+    i = 0
+    step = 0
+    first_loss = 0
+    while i < games_no:
         step += 1
         action = tester.get_action(state)
         next_state, terminal, reward = tester.do_step(action)
         state = next_state
+        if terminal:
+            if step == 1 and reward == -1:
+                first_loss += 1
+            i += 1
+            tester.env.reset()
+            state = tester.env.state
+            if reward == 1:
+                wins += 1
+            step = 0
+
+    # print("Trained using Dueling DQN :Win Rate For " + str(games_no) + " Games: " + str(wins * 100 / (games_no)))
+    print("Win Rate using Dueling DQN: " + str(wins * 100 / (games_no - first_loss)))
+
+
+def play5games_DDQN(games_no=5, display_games=True):
+    
+    tester = AI_Player_DDQN(True)
+    state = tester.env.state
+    count = 0
+    start = time.perf_counter()
+    step = 0
+    first_loss = 0
+    i=0
+
+    while(i<games_no):
+        count+=1
+        step+=1
+        action = tester.get_action(state)
+        next_state,terminal,reward = tester.do_step(action)
+        state = next_state
         print(reward)
         time.sleep(0.5)
-        if terminal:
-            if reward == 1:
-                print("HOORAY!!! YOU WON THE GAME")
+
+        if(terminal):
+            if(reward==1):
+                print("WIN")
             else:
-                print("OOPS!!! YOU LOST THE GAME")
+                
+                print("LOSS")
+            i+=1
             tester.env.reset()
-            step = 0
+            step=0
             state = tester.env.state
-            break
-
-
+            # break
+            
 main()
