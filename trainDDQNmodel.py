@@ -94,7 +94,7 @@ class ModelTrain():
         return loss_print
 
     def save_checkpoints(self, batch_no):
-        path = "./trained_checkpoints/trained_for_" + str(batch_no) + ".pth"
+        path = "./trained_checkpoints_DDQN/trained_for_" + str(batch_no) + ".pth"
         torch.save({
             'epoch': batch_no,
             'current_state_dict': self.current_model.state_dict(),
