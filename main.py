@@ -10,8 +10,8 @@ def main():
     # playMultipleGames_DQN(1000, True)
     # play5games_DQN(5,True)
     
-    playMultipleGames_DDQN(1000, True)
-    # play5games_DDQN(5,True)
+    # playMultipleGames_DDQN(1000, True)
+    play5games_DDQN(5,True)
 
 
 class AI_Player_DQN():
